@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chemistry Climate Quiz</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+
+    #gameCanvas {
+        background: linear-gradient(#6ec6ff, #bfe9ff); /* blue sky */
+        display: block;
+    }
+
+    #questionBox {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        font-size: 22px;
+        text-align: center;
+        width: 60%;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .answerBtn {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 8px;
+        border: none;
+        background: #e0e0e0;
+    }
+
+    #resultIcon {
+        position: absolute;
+        top: 200px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 80px;
+        display: none;
+    }
+
+    #endMessage {
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 40px;
+        font-weight: bold;
+        display: none;
+        color: white;
+        text-shadow: 2px 2px 5px black;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="900" height="600"></canvas>
+
+<div id="questionBox"></div>
+<div id="resultIcon"></div>
+<div id="endMessage"></div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let wrongCount = 0;
+let rightCount = 0;
+let currentQuestion = 0;
+
+const clouds = [
+    {x: 100, y: 80},
+    {x: 350, y: 120},
+    {x: 650, y: 60}
+];
+
+const questions = [
+    {q: "What is the chemical symbol for water?", a: ["H2O", "CO2"], correct: 0},
+    {q: "Which gas do plants absorb?", a: ["Oxygen", "Carbon Dioxide"], correct: 1},
+    {q: "What is the pH of a neutral substance?", a: ["7", "1"], correct: 0},
+    {q: "What gas do humans exhale?", a: ["CO2", "Helium"], correct: 0},
+    {q: "What particle has a negative charge?", a: ["Proton", "Electron"], correct: 1},
+    {q: "What is table salt?", a: ["NaCl", "HCl"], correct: 0},
+    {q: "Which element is needed for combustion?", a: ["Oxygen", "Nitrogen"], correct: 0},
+    {q: "What is the chemical symbol for gold?", a: ["Au", "Ag"], correct: 0},
+    {q: "Which gas causes the greenhouse effect?", a: ["CO2", "Neon"], correct: 0},
+    {q: "What is the center of an atom called?", a: ["Nucleus", "Shell"], correct: 0}
+];
+
+function drawSky() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Darken sky based on wrong answers
+    if (wrongCount === 1) ctx.fillStyle = "rgba(0,0,0,0.15)";
+    if (wrongCount === 2) ctx.fillStyle = "rgba(0,0,0,0.35)";
+    if (wrongCount === 3) ctx.fillStyle = "rgba(0,0,0,0.7)";
+    if (wrongCount > 0) ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw clouds
+    clouds.forEach(c => {
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, 80, 40, 0, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Cannon
+    ctx.fillStyle = "gray";
+    ctx.fillRect(50, 450, 120, 40);
+    ctx.beginPath();
+    ctx.arc(170, 470, 30, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function shootSmoke() {
+    let smokeColor = ["#bbbbbb", "#888888", "#000000"][wrongCount - 1];
+
+    let x = 200;
+    let y = 470;
+    let size = 20;
+
+    let interval = setInterval(() => {
+        drawSky();
+        ctx.fillStyle = smokeColor;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+        y -= 5;
+        size += 1;
+
+        if (y < 200) clearInterval(interval);
+    }, 30);
+}
+
+function showQuestion() {
+    if (currentQuestion >= questions.length) return endGame();
+
+    const q = questions[currentQuestion];
+    const box = document.getElementById("questionBox");
+
+    box.innerHTML = `
+        <div>${q.q}</div>
+        <button class="answerBtn" onclick="answer(0)">${q.a[0]}</button>
+        <button class="answerBtn" onclick="answer(1)">${q.a[1]}</button>
+    `;
+}
+
+function answer(choice) {
+    const q = questions[currentQuestion];
+    const icon = document.getElementById("resultIcon");
+
+    if (choice === q.correct) {
+        rightCount++;
+        icon.innerHTML = "✔️";
+        icon.style.color = "green";
+    } else {
+        wrongCount++;
+        icon.innerHTML = "❌";
+        icon.style.color = "red";
+        shootSmoke();
+    }
+
+    icon.style.display = "block";
+
+    if (wrongCount >= 3) {
+        setTimeout(endGame, 2000);
+        return;
+    }
+
+    setTimeout(() => {
+        icon.style.display = "none";
+        currentQuestion++;
+        showQuestion();
+    }, 5000);
+}
+
+function endGame() {
+    document.getElementById("questionBox").style.display = "none";
+    const msg = document.getElementById("endMessage");
+
+    if (rightCount >= 7) {
+        msg.innerHTML = "CONGRATULATIONS, YOU SAVED THE PLANET!";
+    } else {
+        msg.innerHTML = "THE EARTH OVERHEATED...";
+    }
+
+    msg.style.display = "block";
+}
+
+drawSky();
+showQuestion();
+</script>
+
+</body>
+</html>
